@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% set title = "Operator: %s" % operator.name %}
+
+{% set PATTERN={
+            'int': '\d+',
+            'float': '\d*.\d*',
+            'str': '.*'
+        } %}
+
+{% macro render(p) %}
+    {% set value = ('value="%s"' % p.default) if p.default else "" %}
+    {% if is_file_input(p) %}
+        <div class="pure-control-group">
+            <label for="{{ p.name }}">
+                <abbr title="{{ p.meta.doc }}">
+                    {% if p.meta.label %}
+                        {{ p.meta.label }}
+                    {% else %}
+                        {{ p.name }}
+                    {% endif %}
+                </abbr>
+            </label>
+            <input type="file" name="{{ p.name }}" id="{{ p.name }}"  {{ value|safe }} />
+        </div>
+    {% elif p.physical_type == "bool" %}
+        <div class="pure-controls">
+            <label for="{{ p.name }}" class="pure-checkbox">
+                <input id="{{ p.name }}"  name="{{ p.name }}"  type="checkbox" {% if _bool(p.default) %}checked{% endif %}>
+                <abbr title="{{ p.meta.doc }}">
+                    {% if p.meta.label %}
+                        {{ p.meta.label }}
+                    {% else %}
+                        {{ p.name }}
+                    {% endif %}
+                </abbr>
+            </label>
+        </div>
+    {% else %}
+        <div class="pure-control-group">
+            <label for="{{ p.name }}">
+                <abbr title="{{ p.meta.doc }}">
+                    {% if p.meta.label %}
+                        {{ p.meta.label }}
+                    {% else %}
+                        {{ p.name }}
+                    {% endif %}
+                </abbr>
+            </label>
+            <input type="text"
+                   pattern="{{ PATTERN.get(p.physical_type, '.*') }}"
+                   name="{{ p.name }}" id="{{ p.name }}"  {{ value|safe }} />
+            {% if p.target %}
+                <strong>Attention:</strong> This attribute should be a relative filename.
+            {% endif %}
+        </div>
+    {% endif %}
+{% endmacro %}
+
+
+{% block content %}
+
+    <table class="pure-table pure-table-horizontal">
+        <tr>
+            <th>Title</th>
+            <td>{{ operator.name }}</td>
+        </tr>
+
+        <tr>
+            <th>Description</th>
+            <td>{{ operator.meta.doc|markdown|safe }}</td>
+        </tr>
+
+        <tr>
+            <th>Categories:</th>
+            <td>{{ operator.meta.category }}</td>
+        </tr>
+
+        <tr>
+            <th>License:</th>
+            <td>{{ operator.meta.license }}</td>
+        </tr>
+
+        <tr>
+            <th>contributor:</th>
+            <td>{{ operator.meta.contributor }}</td>
+        </tr>
+
+    </table>
+
+    <hr>
+
+    <form class="pure-form pure-form-aligned" action="{{ url_for("opsubmit", name=operator.name) }}" method="post"
+          enctype="multipart/form-data">
+        <fieldset>
+            <legend>Input</legend>
+            <div class="help"></div>
+            {% for ip in operator.input.values() %}
+                {{ render(ip) }}
+            {% endfor %}
+        </fieldset>
+        <fieldset>
+            <legend>Parameters</legend>
+            <div class="help"></div>
+            {% for ip in operator.parameters.values() %}
+                {{ render(ip) }}
+            {% endfor %}
+        </fieldset>
+
+        <fieldset>
+            <legend>Outputs</legend>
+            {% for out in operator.output.values() %}
+                <div>
+                <span class="label-right">{{ out.name }}
+                    </span>
+                    <em>{{ out.physical_type }}</em>
+                    {{ out.meta.doc }}
+                </div>
+            {% endfor %}
+        </fieldset>
+
+        <div class="pure-controls">
+            <button type="submit" class="pure-button pure-button-primary">Submit</button>
+        </div>
+    </form>
+
+    <hr>
+
+    <h2>Application Support</h2>
+    <h3>CUrl</h3>
+    <pre>
+        {% for ip in operator.parameters.values() %}
+            # {{ ip.meta.doc }}
+            {{ ip.name }}="{{ ip.default }}" # {{ ip.physical_type }}
+        {% endfor %}
+
+        {% for ip in operator.input.values() %}
+            # {{ ip.meta.doc }}
+            {{ ip.name }}="{{ ip.default }}" # This should be a valid file: {{ ip.physical_type }}
+        {% endfor %}
+
+        curl -X POST \
+             -H 'accept:application/json' \{% for ip in operator.parameters.values() %}
+             -F "{{ ip.name }}=${{ ip.name }}" \{% endfor %} {% for ip in operator.input.values() %}
+             -F "{{ ip.name }}=@${{ ip.name }}" \{% endfor %}
+             {{ request.url_root[:-1] }}{{ url_for("opsubmit", name=operator.name) }}"
+    </pre>
+
+
+
+{% endblock %}

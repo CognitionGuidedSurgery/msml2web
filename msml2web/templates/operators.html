@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% set title = "MSMLaaS - Operators" %}
+
+{% block content %}
+    <table class="pure-table pure-horizontal-table   ">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th style="width: 10px; text-align: center" ">Available</th>
+        </tr>
+        </thead>
+        {% for op in operators.values() %}
+            <tr>
+                <td><a href="{{ url_for("opget", name=op.name) }}">{{ op.name }}</a></td>
+                <td>{% if op.meta.doc %}
+                    {{ op.meta.doc|firstline|markdown|safe }}
+                {% endif %}</td>
+                <td style="width:10px;text-align: center">{% if op._function %}Y{% else %}N{% endif %}</td>
+            </tr>
+        {% endfor %}
+
+    </table>
+{% endblock %}
