@@ -26,7 +26,8 @@
     {% elif p.physical_type == "bool" %}
         <div class="pure-controls">
             <label for="{{ p.name }}" class="pure-checkbox">
-                <input id="{{ p.name }}"  name="{{ p.name }}"  type="checkbox" {% if _bool(p.default) %}checked{% endif %}>
+                <input id="{{ p.name }}" name="{{ p.name }}" type="checkbox"
+                       {% if _bool(p.default) %}checked{% endif %}>
                 <abbr title="{{ p.meta.doc }}">
                     {% if p.meta.label %}
                         {{ p.meta.label }}
@@ -68,7 +69,10 @@
 
         <tr>
             <th>Description</th>
-            <td>{{ operator.meta.doc|markdown|safe }}</td>
+            <td>{% if doc in operator.meta %}
+                {{ operator.meta.doc|markdown|safe }}
+            {% endif %}
+            </td>
         </tr>
 
         <tr>
@@ -130,20 +134,20 @@
     <h3>CUrl</h3>
     <pre>
         {% for ip in operator.parameters.values() %}
-            # {{ ip.meta.doc }}
-            {{ ip.name }}="{{ ip.default }}" # {{ ip.physical_type }}
+        # {{ ip.meta.doc }}
+        {{ ip.name }}="{{ ip.default }}" # {{ ip.physical_type }}
         {% endfor %}
 
         {% for ip in operator.input.values() %}
-            # {{ ip.meta.doc }}
-            {{ ip.name }}="{{ ip.default }}" # This should be a valid file: {{ ip.physical_type }}
+        # {{ ip.meta.doc }}
+        {{ ip.name }}="{{ ip.default }}" # This should be a valid file: {{ ip.physical_type }}
         {% endfor %}
 
         curl -X POST \
              -H 'accept:application/json' \{% for ip in operator.parameters.values() %}
-             -F "{{ ip.name }}=${{ ip.name }}" \{% endfor %} {% for ip in operator.input.values() %}
-             -F "{{ ip.name }}=@${{ ip.name }}" \{% endfor %}
-             {{ request.url_root[:-1] }}{{ url_for("opsubmit", name=operator.name) }}"
+            -F "{{ ip.name }}=${{ ip.name }}" \{% endfor %} {% for ip in operator.input.values() %}
+            -F "{{ ip.name }}=@${{ ip.name }}" \{% endfor %}
+            {{ request.url_root[:-1] }}{{ url_for("opsubmit", name=operator.name) }}"
     </pre>
 
 

@@ -157,7 +157,10 @@ def shortmd(md):
 
 def setup():
     app = Flask(__name__)
+    app.config["APPLICATION_ROOT"] = "/msml"
+
     api = Api(app)
+
 
     app.jinja_env.filters["markdown"] = shortmd
     app.jinja_env.filters["firstline"] = firstline
@@ -166,6 +169,7 @@ def setup():
 
     @app.route("/")
     def home():
+        print url_for("home")
         return render_template("index.html", title="MSML as a Service")
 
     @app.route("/operators/")
